@@ -24,7 +24,8 @@ class MLP(object):
        self.layer_num=len(map)-1
        
        self.hiddenLayer=[]
-       #input_to_next_layer=input
+       ####The transfer of the date between the layers
+       ####input_to_next_layer=input
        for i in range(self.layer_num):
            self.hiddenLayer.append(Layer(
                                          input=input_to_next_layer,
