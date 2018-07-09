@@ -12,6 +12,7 @@ import sys
 
 rng = numpy.random
 
+###Loading the in and out data
 def load_dataset( name_spec='rpdata.txt', name_indata="mytextfile.txt", size=0):
     
     file_spec = open(name_spec)
@@ -43,14 +44,14 @@ def load_dataset( name_spec='rpdata.txt', name_indata="mytextfile.txt", size=0):
 	    if size_limitator>=size and size!=0:
 		break
 
-	#conmlement all samplet to one length. add zero to missing part
+##############conmlement all samplet to one length. add zero to missing part
 #    for i in range(len(data_spec)):
 #	add_zeros=maxlen-len(data_spec[i])
 #	#print add_zeros
 #	for j in range(add_zeros):
 #	    data_spec[i]= data_spec[i] + [0] 
 
-# load indata
+######## load indata
     file_indata = open(name_indata)
   
     size_limitator=0
@@ -81,7 +82,7 @@ def load_dataset( name_spec='rpdata.txt', name_indata="mytextfile.txt", size=0):
     data_indata = numpy.array(data_indata)
     data_spec = numpy.array(data_spec)
     
-    #delete equal rows
+############delete equal rows
     #prev=numpy.array([-999])
     #index_to_del=[]
     #for row in range(len(data_spec)):  
@@ -108,7 +109,7 @@ def load_dataset( name_spec='rpdata.txt', name_indata="mytextfile.txt", size=0):
     print "Result data length", len(data_spec)	
 
     maximum=0
-#normalisation of indata 
+########normalisation of indata 
     for column in range(len(data_indata[0])):
     	print "max", column, max(data_indata[:,column])
 	if max(data_indata[:,column])==0:
@@ -122,7 +123,7 @@ def load_dataset( name_spec='rpdata.txt', name_indata="mytextfile.txt", size=0):
     	#rint data_indata[:,column]
     data_indata = data_indata.astype(theano.config.floatX)
 
-#normalisation of outdata 
+##########normalisation of outdata 
     maximum=0	
     for column in range(len(data_spec[0])):
 #    	print "max", column, max(data_spec[:,column])
@@ -156,47 +157,29 @@ def test_mlp(data, target, valid_data, valid_target, \
 	
     upd = []  
  
-    ######################################################
- #  X = T.vector("X")
- #  ddd, uuu = theano.scan(lambda v: T.sqrt(v), sequences=X)
-#    f = theano.function(inputs=[X], outputs=[ddd])#,updates=updates, allow_input_downcast=True)
- #  x=x.astype(theano.config.floatX)
-#    for param_i_t, grad_i_t in zip(params_t, aftergrad_params_t):
-	#print e(x) 
-#	print e(grad_i_t) 
-        #updd.append((param_i_t, param_i_t - learning_rate*ddd(grad_i_t)))
- #   ddd, uuu = theano.scan(lambda v: T.sqrt(v), sequences=X)
- #   f = theano.function(
- #            inputs=[classifier.x,classifier.y],
-             #outputs=[T.sqrt(T.grad( cost, classifier.hiddenLayer[0].params[0])) ] )
- #            outputs=[T.grad( cost, classifier.hiddenLayer[0].params[0]) ] )
-  #  res =  f(D[0], D[1])[0]
- #   print "derivative",  numpy.array(res)
-
     learning_coef_sym = T.scalar('learning_coef_sym', dtype=config.floatX)
 #    learning_coef_sym.tag.test_value = 0.01
-    #############################################################3
+
+    ####### Let's do this!
     for param_i, grad_i in zip(params, aftergrad_params):
 #        upd.append((param_i, param_i - learning_coef*grad_i))
         #upd.append((param_i, param_i - learning_rate*learning_coef_sym*grad_i))
         upd.append((param_i, param_i - learning_coef_sym*grad_i))
 
-#    X = T.matrix("X")
-#    ddd, uuu = theano.scan(lambda v: T.sqrt(v), sequences=X)
-
-    
+    ####creation of the train function
     train = theano.function(
             inputs=[classifier.x, classifier.y, learning_coef_sym],
             outputs=[cost, precessed_data],
             updates=upd,
             name = "train")
     
+    ###Creation of the validation function
     valid = theano.function(
             inputs=[classifier.x,classifier.y],
             outputs=[cost, precessed_data],
             name = "valid")
     
-    
+    ### copy paste from somewhere :) Tell if you use gpu or not
     if any([x.op.__class__.__name__ in ['Gemv', 'CGemv', 'Gemm', 'CGemm'] for x in
             train.maker.fgraph.toposort()]):
         print 'Used the cpu'
@@ -213,12 +196,13 @@ def test_mlp(data, target, valid_data, valid_target, \
     stop_lim=True
     counter = 0
     lowest_valid=99999
-    save_freq=1000
+    save_freq=100
     
     #visual=False	
     visual=True
     plt.ion()
 
+    ##################Do you want to visualise the data?
     if visual==True:
 	fig1 = plt.figure(4, figsize=(20,10))
         res_mon1 = fig1.add_subplot(111)
@@ -243,6 +227,7 @@ def test_mlp(data, target, valid_data, valid_target, \
         train_val, train_proc = train(D[0], D[1], learning_coef)
         valid_val, valid_proc = valid(B[0], B[1])
 
+        ###recalculate the learning coeff
 	if counter >25:
 	    learning_coef = float(train_val/(numpy.fabs(numpy.mean(costval[-20:-1])-train_val))*learning_rate)
 	    #learning_coef = float((train_val/(numpy.fabs(costval[-1]-train_val)))*learning_rate)
@@ -264,20 +249,27 @@ def test_mlp(data, target, valid_data, valid_target, \
 
         if counter%save_freq==0 and counter !=0 :
             if validval[-1]<=lowest_valid or True:
-                classifier.Save(NNid)
+                classifier.Save(NNid)######################SAVE THE NN
  		#print "bebe"
             else:
                 print "Validation is not improuving. NN has not been saved."
             if visual==True:
+
+                ####Cost function for training and validation. 
 	        tr_mon.clear()
-                tr_mon.plot(numpy.linspace(0, len(validval), len(validval)), validval,'r',label='valid')
+                #tr_mon.plot(numpy.linspace(0, len(validval), len(validval)), validval,'r',label='valid')
+                tr_mon.semilogy(numpy.linspace(0, len(validval), len(validval)), validval,'r',label='valid')
                 tr_mon.semilogy(numpy.linspace(0, len(costval), len(costval)), costval, 'b',label='cost')
 		tr_mon.grid(True)
                 tr_mon.legend()
                 tr_mon.relim()
                 tr_mon.autoscale_view()
+                tr_mon.set_xlabel('Iterations')
+                tr_mon.set_ylabel('Cost value')
                 fig2.canvas.draw()
+                fig2.savefig("CostEvol")
 
+                ###Comparison of output parameters for training data
    	        res_mon1.clear()
                 res_mon1.plot(numpy.linspace(0, len(D[0]), len(D[1])), D[1], 'r',label='train')
                 #res_mon1.plot(numpy.linspace(0, len(D[0]), len(D[1])), D[0], 'k',label='train')
@@ -287,6 +279,7 @@ def test_mlp(data, target, valid_data, valid_target, \
                 res_mon1.autoscale_view()
                 fig1.canvas.draw()
 #	    
+                ###Comparison of output parameters for validation data
                 res_mon.clear()
                 res_mon.plot(numpy.linspace(0, len(B[1]), len(B[1])), B[1], 'r',label='valid')
                 res_mon.plot(numpy.linspace(0, len(valid_proc), len(valid_proc)), valid_proc, 'b',label='valid_proc')
@@ -295,12 +288,17 @@ def test_mlp(data, target, valid_data, valid_target, \
                 res_mon.autoscale_view()
                 fig3.canvas.draw()
 
-		#learning coef
+		#####Evolution of training coefficient
 		coef_mon.clear()
-                coef_mon.plot(numpy.linspace(0, len(learning_coef_hist_data), len(learning_coef_hist_data) ), learning_coef_hist_data, 'b',label='learning coef')
+                #coef_mon.plot(numpy.linspace(0, len(learning_coef_hist_data), len(learning_coef_hist_data) ), learning_coef_hist_data, 'b',label='learning coef')
+                coef_mon.semilogy(numpy.linspace(0, len(learning_coef_hist_data), len(learning_coef_hist_data) ), learning_coef_hist_data, 'b',label='learning coef')
 #	coef_mon.hist(learning_coef_hist_data, 100)
                 coef_mon.autoscale_view()
+		coef_mon.grid(True)
+                coef_mon.set_xlabel('Iterations')
+                coef_mon.set_ylabel('Learning Coef value')
                 fig4.canvas.draw()
+                fig4.savefig("LearnCoefEvol")
 
 #	        plt.ioff()
 #	        plt.show()	
