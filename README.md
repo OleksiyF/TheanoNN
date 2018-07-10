@@ -24,5 +24,5 @@ CostEvol.png - evolution of the cost function during a work. "Cost" - for traini
 
 LearnCoefEvol.png - the training method is gradient decent. Here adaptive learning coefficient is ised. It is modified proportionaly to the gradient of cost function. This is the evelution depend on epoch.
 
-OutputParamsMatching.jpg - the coparison of output parameters of a well trained NN for training samples.
+OutputParamsMatching.jpg - the comparison of output parameters of a well trained NN for training samples.
 
